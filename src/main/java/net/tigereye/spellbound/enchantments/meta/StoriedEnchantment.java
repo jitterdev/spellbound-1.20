@@ -57,7 +57,7 @@ public class StoriedEnchantment extends SBEnchantment {
     }
     @Override
     public void onKill(int level, ItemStack stack, DamageSource source, LivingEntity killer, LivingEntity victim){
-        World world = killer.world;
+        World world = killer.getWorld();
         if(!world.isClient()){
             gainStoryXP(stack,killer,victim.getXpToDrop());
         }

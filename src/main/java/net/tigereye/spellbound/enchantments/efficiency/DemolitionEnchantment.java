@@ -93,7 +93,7 @@ public class DemolitionEnchantment extends SBEnchantment {
             double y = pos.getY() + .5;
             double z = pos.getZ() + .5;
             if(!world.isClient()) {
-                Explosion explosion = new Explosion(world, player, null, null, x, y, z, power, false, Explosion.DestructionType.BREAK);
+                Explosion explosion = new Explosion(world, player, null, null, x, y, z, power, false, Explosion.DestructionType.DESTROY);
                 ((SpellboundExplosion) explosion).collectBlocksAndDamageNonItemEntities();
                 List<BlockPos> explodedBlocks = explosion.getAffectedBlocks();
                 for (BlockPos position : explodedBlocks) {

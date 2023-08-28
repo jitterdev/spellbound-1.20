@@ -77,7 +77,7 @@ public class JoustingEnchantment extends SBEnchantment{
                 damage = -damage;
             }
         }
-        if(Spellbound.DEBUG && attacker instanceof PlayerEntity && !attacker.world.isClient){
+        if(Spellbound.DEBUG && attacker instanceof PlayerEntity && !((PlayerEntity) attacker).getWorld().isClient){
             String out;
             out = "Dot Product: " + dotP;
             ((PlayerEntity)attacker).sendMessage(Text.literal(out), false);

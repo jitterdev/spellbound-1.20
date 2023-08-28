@@ -23,7 +23,6 @@
   ],
   "client": [
     "ClientPlayerEntityMixin",
-    "ItemRendererMixin",
     "ItemStackClientMixin"
   ],
   "injectors": {

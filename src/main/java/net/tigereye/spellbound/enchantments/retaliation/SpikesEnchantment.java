@@ -3,7 +3,6 @@ package net.tigereye.spellbound.enchantments.retaliation;
 import net.minecraft.enchantment.EnchantmentTarget;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -47,7 +46,7 @@ public class SpikesEnchantment extends SBEnchantment {
             for (LivingEntity target :
                     entities) {
                 if (target != entity) {
-                    target.damage(DamageSource.thorns(entity), damage);
+                    target.damage(target.getDamageSources().thorns(entity), damage);
                 }
             }
         }

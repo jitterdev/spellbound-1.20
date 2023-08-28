@@ -6,6 +6,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.LootTable;
 import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -46,12 +47,12 @@ public class ScalpingEnchantment extends SBEnchantment{
 
     @Override
     public void onDoRedHealthDamage(int level, ItemStack itemStack, LivingEntity attacker, LivingEntity victim, DamageSource source, float amount) {
-        if(victim.world.isClient()){
+        if(victim.getWorld().isClient()){
             return;
         }
         Identifier identifier = victim.getLootTable();
-        LootTable lootTable = victim.world.getServer().getLootManager().getTable(identifier);
-        LootContext.Builder builder = victim.getLootContextBuilder(attacker instanceof ServerPlayerEntity, source);
+        LootTable lootTable = victim.getWorld().getServer().getLootManager().getLootTable(identifier);
+        LootContextParameterSet.Builder builder = SpellboundUtil.getLootContextBuilder(victim, attacker instanceof ServerPlayerEntity, source);
         float dropChance = (amount / victim.getMaxHealth()) * level * Spellbound.config.scalping.DROP_FACTOR_PER_LEVEL;
         while(dropChance > 0){
             List<ItemStack> rawItemDrops = lootTable.generateLoot(builder.build(LootContextTypes.ENTITY));

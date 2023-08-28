@@ -4,11 +4,11 @@ import net.minecraft.enchantment.EnchantmentTarget;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.damage.EntityDamageSource;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.tag.DamageTypeTags;
 import net.minecraft.util.math.Vec3d;
 import net.tigereye.spellbound.Spellbound;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
@@ -42,9 +42,12 @@ public class OutburstEnchantment extends SBEnchantment {
         if(defender.getEquippedStack(LivingEntity.getPreferredEquipmentSlot(stack)) != stack){
             return amount;
         }
-        if(!source.isProjectile() && !(source instanceof EntityDamageSource)){
+        if(source.isIn(DamageTypeTags.IS_PROJECTILE)) {
             return amount;
         }
+//        if(!source.isProjectile() && !(source instanceof EntityDamageSource)){
+//            return amount;
+//        }
         NbtCompound nbt = stack.getOrCreateNbt();
         int rage = nbt.getInt(OUTBURST_RAGE_NBT_KEY) + Spellbound.config.outburst.RAGE_PER_HIT;
         if(rage >= Spellbound.config.outburst.RAGE_THRESHOLD){
@@ -53,7 +56,7 @@ public class OutburstEnchantment extends SBEnchantment {
             float strength = Spellbound.config.outburst.SHOCKWAVE_POWER*level;
             float range = Spellbound.config.outburst.SHOCKWAVE_RANGE*level;
             float force = Spellbound.config.outburst.SHOCKWAVE_FORCE*level;
-            SpellboundUtil.psudeoExplosion(defender,true,position,strength,range,force);
+            SpellboundUtil.pseudoExplosion(defender,true,position,strength,range,force);
         }
         else{
             nbt.putInt(OUTBURST_RAGE_NBT_KEY,rage);
@@ -63,7 +66,7 @@ public class OutburstEnchantment extends SBEnchantment {
 
     public void onTickWhileEquipped(int level, ItemStack stack, LivingEntity entity){
         NbtCompound nbt = stack.getOrCreateNbt();
-        if(nbt.contains(OUTBURST_RAGE_NBT_KEY) && entity.world.getTime() % 20 == 0){
+        if(nbt.contains(OUTBURST_RAGE_NBT_KEY) && entity.getWorld().getTime() % 20 == 0){
             int rage = nbt.getInt(OUTBURST_RAGE_NBT_KEY);
             if(rage <= 1){
                 nbt.remove(OUTBURST_RAGE_NBT_KEY);

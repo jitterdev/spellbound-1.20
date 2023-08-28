@@ -5,9 +5,11 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.Packet;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -18,6 +20,7 @@ import net.tigereye.spellbound.util.SBEnchantmentHelper;
 import net.tigereye.spellbound.mob_effect.SBStatusEffectHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -29,6 +32,7 @@ import java.util.Map;
 
 @Mixin(LivingEntity.class)
 public class LivingEntityMixin extends Entity implements SpellboundLivingEntity {
+
 
     @Shadow protected float lastDamageTaken;
     private Vec3d SB_OldPos;
@@ -65,7 +69,7 @@ public class LivingEntityMixin extends Entity implements SpellboundLivingEntity 
     public void spellboundLivingEntityApplyIFramesDurationMixin(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir){
         this.lastDamageTaken = SBEnchantmentHelper.onApplyIFrameMagnitude(this.lastDamageTaken, source, amount, (LivingEntity)(Object)this);
         int duration = SBEnchantmentHelper.onApplyIFrameDuration(this.timeUntilRegen, source, amount, (LivingEntity)(Object)this);
-        if(!this.world.isClient && ((LivingEntity)(Object)this) instanceof ServerPlayerEntity entity){
+        if(!this.getWorld().isClient && ((LivingEntity)(Object)this) instanceof ServerPlayerEntity entity){
             NetworkingUtil.sendGraceDataPacket(this.lastDamageTaken,duration-10,entity);
         }
         this.timeUntilRegen = duration;
@@ -170,8 +174,5 @@ public class LivingEntityMixin extends Entity implements SpellboundLivingEntity 
 
     }
 
-    @Shadow
-    public Packet<?> createSpawnPacket() {
-        return null;
-    }
+
 }

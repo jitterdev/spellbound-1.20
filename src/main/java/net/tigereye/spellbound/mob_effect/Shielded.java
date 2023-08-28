@@ -2,7 +2,7 @@ package net.tigereye.spellbound.mob_effect;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
@@ -49,7 +49,7 @@ public class Shielded extends SBStatusEffect{
         return 0;
     }
 
-    public static void renderShields(MatrixStack matrixStack, float delta){
+    public static void renderShields(DrawContext context, float delta){
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
         if(!(player.isCreative() || player.isSpectator())) {
@@ -57,7 +57,6 @@ public class Shielded extends SBStatusEffect{
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
 
-            matrixStack.push();
             RenderSystem._setShaderTexture(0, SHIELDED_HEART);
             int scaledWidth = client.getWindow().getScaledWidth();
             int scaledHeight = client.getWindow().getScaledHeight();
@@ -76,7 +75,7 @@ public class Shielded extends SBStatusEffect{
                 }
             }
 
-            int i = 9 * (player.world.getLevelProperties().isHardcore() ? 5 : 0);
+            int i = 9 * (player.getWorld().getLevelProperties().isHardcore() ? 5 : 0);
             int j = MathHelper.ceil((double) maxHealth / 2.0D);
             int k = MathHelper.ceil((double) absorption / 2.0D);
             int l = j * 2;
@@ -91,11 +90,10 @@ public class Shielded extends SBStatusEffect{
                 //int r = m * 2;
 
                 if (m < displayedShields) {
-                    DrawableHelper.drawTexture(matrixStack, posX, posY, 0, 0, 11, 11, 11, 11);
+                    context.drawTexture(SHIELDED_HEART, posX, posY, 0, 0, 11, 11, 11, 11);
                     //this.drawHeart(matrixStack, heartType, posX, posY, i, false, isHalfHeart);
                 }
             }
-            matrixStack.pop();
 
             RenderSystem.enableDepthTest();
         }
