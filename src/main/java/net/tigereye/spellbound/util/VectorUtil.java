@@ -1,17 +1,34 @@
 package net.tigereye.spellbound.util;
 
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.tigereye.spellbound.Spellbound;
 
+import javax.swing.text.html.parser.Entity;
 import java.util.Collections;
 
 public class VectorUtil {
 
+    public static Vec3d getEntityBoundingBoxOffset(Vec3d direction, Box boundingBox){
+        Vec3d borders = new Vec3d(
+                direction.x > 0 ? boundingBox.getXLength()/2 : -boundingBox.getXLength()/2,
+                0,
+                direction.z > 0 ? boundingBox.getZLength()/2 : -boundingBox.getZLength()/2);
+        BlockExitInfo info = getHorizontalExitPoint(Vec3d.ZERO,direction,borders);
+        if(info != null) {
+            return info.pos;
+        }
+        else{
+            return Vec3d.ZERO;
+        }
+    }
     public static BlockExitInfo getHorizontalExitPoint(Vec3d position, Vec3d velocity, Vec3d borders){
         double timeToImpactX;
+        velocity = velocity.multiply(1,0,1);
         if(velocity.x != 0){
             timeToImpactX = (borders.x-position.x)/ velocity.x;
         }
@@ -49,10 +66,10 @@ public class VectorUtil {
 
     public static Vec3d findCollisionWithStepAssistOnLine(World world, Vec3d position, Vec3d direction, double length){
         int remainingMaxIterations = (int)(length*2+1);
-        BlockPos blockPos = new BlockPos(position);
+        BlockPos blockPos = new BlockPos(BlockPos.ofFloored(position));
         Vec3d unitVector = direction.normalize();
         Vec3d finalPosition = position.add(unitVector.multiply(length/*level*DISTANCE_PER_LEVEL*/));
-        BlockPos finalBlockPosition = new BlockPos(finalPosition);
+        BlockPos finalBlockPosition = new BlockPos(BlockPos.ofFloored(finalPosition));
         boolean endPointFound = false;
         while(!endPointFound) {
             //find point and direction where next block is touched
@@ -74,13 +91,13 @@ public class VectorUtil {
                 blockPos = blockPos.offset(Direction.UP);
                 if(SpellboundUtil.isPositionObstructed(world,blockPos)){
                     endPointFound = true;
-                    blockPos = blockPos.offset(exitInfo.direction,-1);
-                    position = new Vec3d(blockPos.getX()+.5, blockPos.getY()-1, blockPos.getZ()+.5 );
+                    //blockPos = blockPos.offset(exitInfo.direction,-1);
+                    //position = new Vec3d(blockPos.getX()+.5, blockPos.getY()-1, blockPos.getZ()+.5 );
                 }
                 else{
                     //move position and end position up one block
-                    position = new Vec3d(position.x,Math.floor(position.y+1),position.z);
-                    finalPosition = finalPosition.add(0,1,0);
+                    position = new Vec3d(position.x,Math.floor(position.y+1)+.1,position.z);
+                    finalPosition = new Vec3d(finalPosition.x, Math.floor(finalPosition.y+1)+.1, finalPosition.z);
                     finalBlockPosition = finalBlockPosition.add(0,1,0);
                 }
             }
@@ -102,6 +119,23 @@ public class VectorUtil {
             return null;
         }
         return position;
+    }
+
+
+    public static Vec3d backtrackToUsableSpace(World world, LivingEntity entity, Box boundingBox, Vec3d position) {
+        Vec3d moveVector = position.subtract(entity.getPos());
+        Vec3d moveVectorNorm = moveVector.normalize();
+        Box newBounds = Box.of(boundingBox.getCenter().add(moveVector),boundingBox.getXLength(),boundingBox.getYLength(),boundingBox.getZLength());
+        double length = moveVector.length();
+        while(!world.isSpaceEmpty(newBounds)){
+            if(length < .5){
+                return null;
+            }
+            length -= .5;
+            newBounds = Box.of(entity.getPos().add(moveVectorNorm.multiply(length)),
+                    boundingBox.getXLength(),boundingBox.getYLength(),boundingBox.getZLength());
+        }
+        return entity.getPos().add(moveVectorNorm.multiply(length));
     }
 
     public static Vec3d roundVectorAxis(Vec3d pos,Direction.Axis axis){

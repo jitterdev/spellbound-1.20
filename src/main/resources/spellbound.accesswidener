@@ -1,0 +1,6 @@
+accessWidener	v1	named
+
+accessible    method    net/minecraft/enchantment/EnchantmentHelper    forEachEnchantment    (Lnet/minecraft/enchantment/EnchantmentHelper$Consumer;Lnet/minecraft/item/ItemStack;)V
+accessible    class    net/minecraft/enchantment/EnchantmentHelper$Consumer
+extendable class net/minecraft/enchantment/EnchantmentTarget
+accessible field net/minecraft/entity/LivingEntity attackingPlayer Lnet/minecraft/entity/player/PlayerEntity;

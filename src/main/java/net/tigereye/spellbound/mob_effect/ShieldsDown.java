@@ -21,27 +21,16 @@ public class ShieldsDown extends SBStatusEffect{
     }
 
     public void applyUpdateEffect(LivingEntity entity, int amplifier) {
-        if(!(entity.world.isClient)){
+        if(!(entity.getWorld().isClient)){
             int redAlert = SBEnchantmentHelper.countSpellboundEnchantmentInstances(entity.getItemsEquipped(), SBEnchantments.RED_ALERT);
             if(redAlert > 0){
                 entity.addStatusEffect(new StatusEffectInstance(SBStatusEffects.SHIELDED,
-                        Spellbound.config.RED_ALERT_SHIELD_DURATION + RedAlertEnchantment.getModifiedRecoveryRate(entity,redAlert),
+                        Spellbound.config.redAlert.SHIELD_DURATION + RedAlertEnchantment.getModifiedRecoveryRate(entity,redAlert),
                         0, false, false, true));
             }
             else{
                 entity.removeStatusEffect(SBStatusEffects.SHIELDED);
             }
         }
-    }
-
-    public static StatusEffectInstance generateInstance(LivingEntity entity, int duration){
-        int redAlert = SBEnchantmentHelper.countSpellboundEnchantmentInstances(entity.getItemsEquipped(), SBEnchantments.RED_ALERT);
-        if(redAlert > 0) {
-            int mrr = RedAlertEnchantment.getModifiedRecoveryRate(entity, redAlert);
-            return new StatusEffectInstance(SBStatusEffects.SHIELDS_DOWN,
-                    Math.min(Spellbound.config.RED_ALERT_SHIELD_DURATION + mrr, duration),
-                    0);
-        }
-        return null;
     }
 }

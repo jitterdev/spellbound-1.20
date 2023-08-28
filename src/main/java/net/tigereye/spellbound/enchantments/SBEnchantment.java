@@ -25,13 +25,38 @@ import net.tigereye.spellbound.util.SBEnchantmentHelper;
 import java.util.List;
 
 public abstract class SBEnchantment extends Enchantment {
-    protected boolean REQUIRES_PREFERRED_SLOT = true;
+    protected boolean REQUIRES_PREFERRED_SLOT;
 
-    protected SBEnchantment(Rarity weight, EnchantmentTarget type, EquipmentSlot[] slotTypes) {
+    protected SBEnchantment(Rarity weight, EnchantmentTarget type, EquipmentSlot[] slotTypes,boolean requiresPreferedSlot) {
         super(weight, type, slotTypes);
+        REQUIRES_PREFERRED_SLOT = requiresPreferedSlot;
+    }
+    public abstract boolean isEnabled();
+    public abstract int getSoftLevelCap();
+    public abstract int getHardLevelCap();
+    public abstract int getBasePower();
+    public abstract int getPowerPerRank();
+    public abstract int getPowerRange();
+
+    @Override
+    public int getMinPower(int level) {
+        int power = (getPowerPerRank() * level) + getBasePower();
+        if(level > getSoftLevelCap()) {
+            power += Spellbound.config.POWER_TO_EXCEED_SOFT_CAP;
+        }
+        return power;
     }
 
-    public abstract boolean isEnabled();
+    @Override
+    public int getMaxPower(int level) {
+        return super.getMinPower(level) + getPowerRange();
+    }
+
+    @Override
+    public int getMaxLevel() {
+        if(isEnabled()) return getHardLevelCap();
+        else return 0;
+    }
 
     //triggers after unbreaking. Recieves remaining durability to be lost,
     //and return value determines how much will actually be lost.
@@ -51,24 +76,35 @@ public abstract class SBEnchantment extends Enchantment {
     public void onActivate(int level, PlayerEntity playerEntity, ItemStack itemStack, Entity target) {}
 
     //for when equipment is changed
-    public void onEquipmentChange(int level, ItemStack stack, LivingEntity entity){}
+    //public void onEquipmentChange(int level, ItemStack stack, LivingEntity entity){}
 
     //for when you reel in a hooked entity
     public void onPullHookedEntity(int level, FishingBobberEntity bobber, ItemStack stack, LivingEntity user, Entity target){}
 
     //public void onArmorChangeEvenIfAbsent
 
-    public void onBreakBlock(int level, ItemStack itemStack, World world, BlockPos pos, BlockState state, PlayerEntity player) {
-    }
+    public void onBreakBlock(int level, ItemStack itemStack, World world, BlockPos pos, BlockState state, PlayerEntity player) {}
 
     //for when the user dies
     public void onDeath(int level, ItemStack stack, DamageSource source, LivingEntity killer, LivingEntity victim){}
 
+    //for when arrows are fired
+    public void onFireProjectile(int level, ItemStack itemStack, Entity entity, ProjectileEntity projectile){}
+
+    //for every tick while the item is in a player's inventory
+    public void onInventoryTick(int level, ItemStack stack, World world, Entity entity, int slot, boolean selected){}
+
     //for when the user jumps
     public void onJump(int level, ItemStack stack, LivingEntity entity){}
 
+    //for when the user double jumps
+    public void onMidairJump(int level, ItemStack stack, LivingEntity entity){}
+
     //for when the user kills
     public void onKill(int level, ItemStack stack, DamageSource source, LivingEntity killer, LivingEntity victim){}
+
+    //for when an item breaks with Legacy
+    public void onLegacyToolBreak(int level, ItemStack book, ItemStack itemStack, Entity entity) {}
 
     //for when the user is struck, before armor is applied
     public float onPreArmorDefense(int level, ItemStack stack, DamageSource source, LivingEntity defender, float amount){return amount;}
@@ -86,6 +122,9 @@ public abstract class SBEnchantment extends Enchantment {
         return 0;
     }
 
+    //for when trident thrown
+    public void onThrowTrident(int level, ItemStack itemStack, Entity entity, TridentEntity projectile){}
+
     //for every tick the enchanted item is equipped.
     // Careful, this will be called separately for every instance of the enchantment.
     public void onTickWhileEquipped(int level, ItemStack stack, LivingEntity entity){}
@@ -94,10 +133,26 @@ public abstract class SBEnchantment extends Enchantment {
 
     public void onTickAlways(LivingEntity entity){}
 
-    public void onToolBreak(int level, ItemStack itemStack, PlayerEntity entity) {}
+    public void onEquipmentChange(int oldLevel, int newLevel, ItemStack oldItem, ItemStack newItem, LivingEntity entity){}
+
+    public boolean beforeToolBreak(int level, ItemStack itemStack, Entity entity) {return true;}
+
+    public void onToolBreak(int level, ItemStack itemStack, Entity entity) {}
+
+    public float getArmorAmount(int level, ItemStack stack, LivingEntity entity) {
+        return 0;
+    }
 
     public float getProtectionAmount(int level, DamageSource source, ItemStack stack, LivingEntity target) {
         return 0;
+    }
+
+    public int getIFrameAmount(int level, int frames, DamageSource source, float damageAmount, ItemStack itemStack, LivingEntity defender) {
+        return frames;
+    }
+
+    public float getIFrameMagnitude(int level, float magnitude, DamageSource source, float damageAmount, ItemStack itemStack, LivingEntity defender) {
+        return magnitude;
     }
 
     public List<Text> addTooltip(int level, ItemStack itemStack, PlayerEntity player, TooltipContext context) {
@@ -115,6 +170,9 @@ public abstract class SBEnchantment extends Enchantment {
     }
 
     public void onRedHealthDamage(int level, ItemStack itemStack, LivingEntity entity, float amount) {
+    }
+
+    public void onDoRedHealthDamage(int level, ItemStack itemStack, LivingEntity attacker, LivingEntity victim, DamageSource source, float amount) {
     }
 
     public boolean requiresPreferredSlot(){

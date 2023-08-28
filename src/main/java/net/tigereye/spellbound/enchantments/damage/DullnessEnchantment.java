@@ -1,43 +1,42 @@
 package net.tigereye.spellbound.enchantments.damage;
 
-import net.minecraft.enchantment.*;
+import net.minecraft.enchantment.EnchantmentTarget;
 import net.minecraft.entity.EntityGroup;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.ToolItem;
 import net.tigereye.spellbound.Spellbound;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
 public class DullnessEnchantment extends SBEnchantment {
 
     public DullnessEnchantment() {
-        super(Enchantment.Rarity.RARE, EnchantmentTarget.DIGGER, new EquipmentSlot[] {EquipmentSlot.MAINHAND});
-        REQUIRES_PREFERRED_SLOT = false;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.dullness.RARITY), EnchantmentTarget.DIGGER, new EquipmentSlot[] {EquipmentSlot.MAINHAND}, false);
     }
 
     @Override
-    public boolean isEnabled() {
-        return Spellbound.config.DULLNESS_ENABLED;
-    }
-
+    public boolean isEnabled() {return Spellbound.config.dullness.ENABLED;}
     @Override
-    public int getMinPower(int level) {
-        return 1 + 8 * (level - 1);
-    }
-
+    public int getSoftLevelCap(){return Spellbound.config.dullness.SOFT_CAP;}
     @Override
-    public int getMaxPower(int level) {
-        return super.getMinPower(level) + 20;
-    }
-
+    public int getHardLevelCap(){return Spellbound.config.dullness.HARD_CAP;}
     @Override
-    public int getMaxLevel() {
-        return 5;
-    }
+    public int getBasePower(){return Spellbound.config.dullness.BASE_POWER;}
+    @Override
+    public int getPowerPerRank(){return Spellbound.config.dullness.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.dullness.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.dullness.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.dullness.IS_FOR_SALE;}
 
     @Override
     public boolean isAcceptableItem(ItemStack stack) {
-        return super.isAcceptableItem(stack) || EnchantmentTarget.BREAKABLE.isAcceptableItem(stack.getItem());
+        return super.isAcceptableItem(stack) ||
+                stack.getItem() instanceof ToolItem;
+
     }
 
     @Override

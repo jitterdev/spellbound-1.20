@@ -1,53 +1,37 @@
 package net.tigereye.spellbound.enchantments.repair;
 
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.*;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.math.Vec3d;
 import net.tigereye.spellbound.Spellbound;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
 import net.tigereye.spellbound.registration.SBEnchantments;
-
-import java.util.Iterator;
-import java.util.Random;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
 public class SelfishEnchantment extends SBEnchantment {
 
     public SelfishEnchantment() {
-        super(Rarity.RARE, EnchantmentTarget.BREAKABLE, new EquipmentSlot[] {EquipmentSlot.MAINHAND});
-        REQUIRES_PREFERRED_SLOT = false;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.selfish.RARITY), EnchantmentTarget.BREAKABLE, new EquipmentSlot[] {EquipmentSlot.MAINHAND},false);
     }
-
     @Override
-    public int getMinPower(int level) {
-        return 5;
-    }
-
+    public boolean isEnabled() {return Spellbound.config.selfish.ENABLED;}
     @Override
-    public int getMaxPower(int level) {
-        return 51;
-    }
-
+    public int getSoftLevelCap(){return Spellbound.config.selfish.SOFT_CAP;}
     @Override
-    public boolean isEnabled() {
-        return Spellbound.config.SELFISH_ENABLED;
-    }
-
+    public int getHardLevelCap(){return Spellbound.config.selfish.HARD_CAP;}
     @Override
-    public int getMaxLevel() {
-        if(isEnabled()) return 1;
-        else return 0;
-    }
+    public int getBasePower(){return Spellbound.config.selfish.BASE_POWER;}
+    @Override
+    public int getPowerPerRank(){return Spellbound.config.selfish.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.selfish.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.selfish.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.selfish.IS_FOR_SALE;}
 
     @Override
     public boolean isAcceptableItem(ItemStack stack) {
@@ -56,31 +40,19 @@ public class SelfishEnchantment extends SBEnchantment {
 
     @Override
     public void onTickWhileEquipped(int level, ItemStack stack, LivingEntity entity){
-        if(!entity.world.isClient() && stack.isDamaged()){
-            Iterator<ItemStack> i = entity.getItemsEquipped().iterator();
+        if(!entity.getWorld().isClient() && stack.isDamaged()){
             ItemStack target;
-            int targetSlot = (int) (entity.world.getTime() % 7);
-            switch(targetSlot){
-                case 0:
-                    target = entity.getEquippedStack(EquipmentSlot.MAINHAND);
-                    break;
-                case 1:
-                    target = entity.getEquippedStack(EquipmentSlot.OFFHAND);
-                    break;
-                case 2:
-                    target = entity.getEquippedStack(EquipmentSlot.HEAD);
-                    break;
-                case 3:
-                    target = entity.getEquippedStack(EquipmentSlot.CHEST);
-                    break;
-                case 4:
-                    target = entity.getEquippedStack(EquipmentSlot.LEGS);
-                    break;
-                case 5:
-                    target = entity.getEquippedStack(EquipmentSlot.FEET);
-                    break;
-                default:
+            int targetSlot = (int) (entity.getWorld().getTime() % 7);
+            switch (targetSlot) {
+                case 0 -> target = entity.getEquippedStack(EquipmentSlot.MAINHAND);
+                case 1 -> target = entity.getEquippedStack(EquipmentSlot.OFFHAND);
+                case 2 -> target = entity.getEquippedStack(EquipmentSlot.HEAD);
+                case 3 -> target = entity.getEquippedStack(EquipmentSlot.CHEST);
+                case 4 -> target = entity.getEquippedStack(EquipmentSlot.LEGS);
+                case 5 -> target = entity.getEquippedStack(EquipmentSlot.FEET);
+                default -> {
                     return;
+                }
             }
             if(target.isDamageable()
                         && target.getDamage() < target.getMaxDamage() - 1
@@ -91,11 +63,6 @@ public class SelfishEnchantment extends SBEnchantment {
                 stack.setDamage(stack.getDamage()-1);
             }
         }
-    }
-
-    @Override
-    public boolean isTreasure() {
-        return false;
     }
 
 }

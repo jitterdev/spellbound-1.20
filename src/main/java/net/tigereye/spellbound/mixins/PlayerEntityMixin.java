@@ -7,7 +7,7 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.tigereye.spellbound.SpellboundPlayerEntity;
+import net.tigereye.spellbound.interfaces.SpellboundPlayerEntity;
 import net.tigereye.spellbound.util.SBEnchantmentHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,6 +29,9 @@ public class PlayerEntityMixin implements SpellboundPlayerEntity {
     @Inject(at = @At(value="CONSTANT", args="floatValue=0",ordinal = 1), method = "applyDamage")
     public void spellboundLivingEntityApplyDamagePostDamageMixin(DamageSource source, float amount, CallbackInfo info){
         SBEnchantmentHelper.onRedHealthDamage(source,(LivingEntity)(Object)this,amount);
+        if(source.getAttacker() instanceof LivingEntity attacker) {
+            SBEnchantmentHelper.onDoRedHealthDamage(attacker, source, (LivingEntity) (Object) this, amount);
+        }
     }
 
     @Override
@@ -60,4 +63,5 @@ public class PlayerEntityMixin implements SpellboundPlayerEntity {
     public void spellboundPlayerEntityInteractMixin(Entity entity, Hand hand, CallbackInfoReturnable<ActionResult> info){
         SBEnchantmentHelper.onActivate((PlayerEntity)(Object)this, entity, hand);
     }
+
 }

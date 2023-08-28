@@ -1,42 +1,36 @@
 package net.tigereye.spellbound.enchantments.repair;
 
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.tigereye.spellbound.Spellbound;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
 public class PhotosyntheticEnchantment extends SBEnchantment {
 
     public PhotosyntheticEnchantment() {
-        super(Rarity.RARE, EnchantmentTarget.BREAKABLE, new EquipmentSlot[] {EquipmentSlot.MAINHAND});
-        REQUIRES_PREFERRED_SLOT = false;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.photosynthetic.RARITY), EnchantmentTarget.BREAKABLE, new EquipmentSlot[] {EquipmentSlot.MAINHAND},false);
     }
-
     @Override
-    public int getMinPower(int level) {
-        return 5;
-    }
-
+    public boolean isEnabled() {return Spellbound.config.photosynthetic.ENABLED;}
     @Override
-    public int getMaxPower(int level) {
-        return 51;
-    }
-
+    public int getSoftLevelCap(){return Spellbound.config.photosynthetic.SOFT_CAP;}
     @Override
-    public boolean isEnabled() {
-        return Spellbound.config.PHOTOSYNTHETIC_ENABLED;
-    }
-
+    public int getHardLevelCap(){return Spellbound.config.photosynthetic.HARD_CAP;}
     @Override
-    public int getMaxLevel() {
-        if(isEnabled()) return 1;
-        else return 0;
-    }
+    public int getBasePower(){return Spellbound.config.photosynthetic.BASE_POWER;}
+    @Override
+    public int getPowerPerRank(){return Spellbound.config.photosynthetic.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.photosynthetic.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.photosynthetic.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.photosynthetic.IS_FOR_SALE;}
 
     @Override
     public boolean isAcceptableItem(ItemStack stack) {
@@ -44,23 +38,19 @@ public class PhotosyntheticEnchantment extends SBEnchantment {
     }
 
     @Override
-    public void onTickWhileEquipped(int level, ItemStack stack, LivingEntity entity){
-        World world = entity.world;
+    public void onInventoryTick(int level, ItemStack stack, World world, Entity entity, int slot, boolean selected){
         if(!world.isClient() && stack.isDamaged()){
+            if(selected && entity instanceof PlayerEntity && ((PlayerEntity) entity).handSwinging){
+                return;
+            }
             int light = world.getLightLevel(entity.getBlockPos());
-            if(light < Spellbound.config.PHOTOSYNTHETIC_LIGHT_MINIMUM){
+            if(light < Spellbound.config.photosynthetic.LIGHT_MINIMUM){
                 return;
             }
             int periodMultiplier = Math.max(1,16 - light);
-            if(entity.world.getTime() % ((long) Spellbound.config.PHOTOSYNTHETIC_REPAIR_PERIOD*periodMultiplier) == 0){
+            if(entity.getWorld().getTime() % ((long) Spellbound.config.photosynthetic.REPAIR_PERIOD*periodMultiplier) == 0){
                 stack.setDamage(stack.getDamage()-1);
             }
         }
     }
-
-    @Override
-    public boolean isTreasure() {
-        return false;
-    }
-
 }

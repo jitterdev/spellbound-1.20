@@ -1,76 +1,66 @@
 package net.tigereye.spellbound.enchantments.protection;
 
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.item.*;
+import net.minecraft.item.ItemStack;
 import net.tigereye.spellbound.Spellbound;
-import net.tigereye.spellbound.enchantments.CustomConditionsEnchantment;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
+import net.tigereye.spellbound.registration.SBEnchantmentTargets;
 import net.tigereye.spellbound.registration.SBEnchantments;
 import net.tigereye.spellbound.registration.SBStatusEffects;
 import net.tigereye.spellbound.util.SBEnchantmentHelper;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
-public class RedAlertEnchantment extends SBEnchantment implements CustomConditionsEnchantment {
+public class RedAlertEnchantment extends SBEnchantment{
 
     public RedAlertEnchantment() {
-        super(Rarity.UNCOMMON, EnchantmentTarget.VANISHABLE, new EquipmentSlot[] {EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET,EquipmentSlot.OFFHAND});
-        REQUIRES_PREFERRED_SLOT = true;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.redAlert.RARITY), SBEnchantmentTargets.ARMOR_MAYBE_SHIELD,
+                Spellbound.config.CAN_SHIELD_HAVE_ARMOR_ENCHANTMENTS
+                        ? new EquipmentSlot[] {EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET,EquipmentSlot.OFFHAND}
+                        : new EquipmentSlot[] {EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET}
+                ,true);
     }
+    @Override
+    public boolean isEnabled() {return Spellbound.config.redAlert.ENABLED;}
+    @Override
+    public int getSoftLevelCap(){return Spellbound.config.redAlert.SOFT_CAP;}
+    @Override
+    public int getHardLevelCap(){return Spellbound.config.redAlert.HARD_CAP;}
+    @Override
+    public int getBasePower(){return Spellbound.config.redAlert.BASE_POWER;}
+    @Override
+    public int getPowerPerRank(){return Spellbound.config.redAlert.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.redAlert.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.redAlert.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.redAlert.IS_FOR_SALE;}
 
     @Override
-    public int getMinPower(int level) {
-        return (level*11)-10;
-    }
-
-    @Override
-    public int getMaxPower(int level) {
-        return this.getMinPower(level)+15;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return Spellbound.config.RED_ALERT_ENABLED;
-    }
-
-    @Override
-    public int getMaxLevel() {
-        if(isEnabled()) return 4;
-        else return 0;
-    }
-
-    @Override
-    public boolean isAcceptableItem(ItemStack stack) {
-        return isAcceptableAtTable(stack);
-    }
-
-    @Override
-    public void onTickWhileEquipped(int level, ItemStack stack, LivingEntity entity){
+    public void onTickOnceWhileEquipped(int level, ItemStack stack, LivingEntity entity){
         if(entity.getEquippedStack(LivingEntity.getPreferredEquipmentSlot(stack)) != stack){
             return;
         }
-        if(entity.hasStatusEffect(SBStatusEffects.SHIELDS_DOWN)){
+        int shieldedLevel = 0;
+        if(entity.hasStatusEffect(SBStatusEffects.SHIELDED)){
+            shieldedLevel = entity.getStatusEffect(SBStatusEffects.SHIELDED).getAmplifier()+1;
+        }
+        int redAlertCount = SBEnchantmentHelper.countSpellboundEnchantmentInstances(entity.getItemsEquipped(), SBEnchantments.RED_ALERT);
+        if(redAlertCount <= shieldedLevel){
+            entity.removeStatusEffect(SBStatusEffects.SHIELDS_DOWN);
+            entity.addStatusEffect(new StatusEffectInstance(SBStatusEffects.SHIELDED,
+                    Spellbound.config.redAlert.SHIELD_DURATION+1,
+                    redAlertCount-1, false, false, false));
+        }
+        else if(entity.hasStatusEffect(SBStatusEffects.SHIELDS_DOWN)){
             StatusEffectInstance shields_down = entity.getStatusEffect(SBStatusEffects.SHIELDS_DOWN);
             if(shields_down.getDuration() <= 2){
                 entity.addStatusEffect(new StatusEffectInstance(SBStatusEffects.SHIELDS_DOWN, RedAlertEnchantment.getModifiedRecoveryRate(entity), 0, false, false, false));
-
-                //refresh shielded
-                if(entity.hasStatusEffect(SBStatusEffects.SHIELDED)){
-                    StatusEffectInstance shielded = entity.getStatusEffect(SBStatusEffects.SHIELDED);
-                    int redAlertCount = SBEnchantmentHelper.countSpellboundEnchantmentInstances(entity.getItemsEquipped(), SBEnchantments.RED_ALERT);
-                    if(redAlertCount > 0){
-                        //entity.removeStatusEffect(SBStatusEffects.SHIELDED);
-                        entity.addStatusEffect(new StatusEffectInstance(SBStatusEffects.SHIELDED,
-                                Spellbound.config.RED_ALERT_SHIELD_DURATION,
-                                Math.min(redAlertCount-1,shielded.getAmplifier()+1), false, false, true));
-                    }
-                }
-                else{
-                    entity.addStatusEffect(new StatusEffectInstance(SBStatusEffects.SHIELDED,Spellbound.config.RED_ALERT_SHIELD_DURATION,0, false, false, true));
-                }
+                entity.addStatusEffect(new StatusEffectInstance(SBStatusEffects.SHIELDED,
+                        Spellbound.config.redAlert.SHIELD_DURATION,
+                        Math.min(redAlertCount-1,shieldedLevel), false, false, false));
             }
         }
         else{
@@ -85,17 +75,10 @@ public class RedAlertEnchantment extends SBEnchantment implements CustomConditio
     }
     public static int getModifiedRecoveryRate(LivingEntity entity, int redAlertCount){
         if(redAlertCount == 0){
-            return Spellbound.config.RED_ALERT_RECOVERY_RATE;
+            return Spellbound.config.redAlert.RECOVERY_RATE;
         }
         int redAlertLevel = SBEnchantmentHelper.getSpellboundEnchantmentAmount(entity.getItemsEquipped(), SBEnchantments.RED_ALERT);
-        return Math.max(Spellbound.config.RED_ALERT_MINIMUM_RECOVERY_TIME,
-                Spellbound.config.RED_ALERT_RECOVERY_RATE -(Spellbound.config.RED_ALERT_RECOVERY_REDUCTION *Math.max(0,redAlertLevel-redAlertCount)/redAlertCount));
-    }
-
-    @Override
-    public boolean isAcceptableAtTable(ItemStack stack) {
-        return stack.getItem() instanceof ArmorItem
-                || stack.getItem() instanceof ShieldItem
-                || stack.getItem() == Items.BOOK;
+        return Math.max(Spellbound.config.redAlert.MINIMUM_RECOVERY_TIME,
+                Spellbound.config.redAlert.RECOVERY_RATE -(Spellbound.config.redAlert.RECOVERY_REDUCTION *Math.max(0,redAlertLevel-redAlertCount)/redAlertCount));
     }
 }

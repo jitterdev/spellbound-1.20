@@ -1,64 +1,42 @@
 package net.tigereye.spellbound.enchantments.efficiency;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.tigereye.spellbound.Spellbound;
-import net.tigereye.spellbound.enchantments.CustomConditionsEnchantment;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
-import java.util.*;
 
-public class AccelerationEnchantment extends SBEnchantment implements CustomConditionsEnchantment {
+public class AccelerationEnchantment extends SBEnchantment{
 
     private static final String ACCELERATION_STACKS_KEY = Spellbound.MODID+"SB_Acceleration_Stacks";
     private static final String ACCELERATION_TIME_KEY = Spellbound.MODID+"SB_Acceleration_Time";
     public AccelerationEnchantment() {
-        super(Rarity.UNCOMMON, EnchantmentTarget.VANISHABLE, new EquipmentSlot[] {EquipmentSlot.MAINHAND});
-        REQUIRES_PREFERRED_SLOT = true;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.acceleration.RARITY), EnchantmentTarget.DIGGER, new EquipmentSlot[] {EquipmentSlot.MAINHAND},true);
     }
-
     @Override
-    public boolean isEnabled() {
-        return Spellbound.config.ACCELERATION_ENABLED;
-    }
-
+    public boolean isEnabled() {return Spellbound.config.acceleration.ENABLED;}
     @Override
-    public int getMinPower(int level) {
-        return 1 + 10 * (level - 1);
-    }
-
+    public int getSoftLevelCap(){return Spellbound.config.acceleration.SOFT_CAP;}
     @Override
-    public int getMaxPower(int level) {
-        return super.getMinPower(level) + 50;
-    }
-
+    public int getHardLevelCap(){return Spellbound.config.acceleration.HARD_CAP;}
     @Override
-    public int getMaxLevel() {
-        if(isEnabled()) return 5;
-        else return 0;
-    }
-
+    public int getBasePower(){return Spellbound.config.acceleration.BASE_POWER;}
     @Override
-    public boolean isAcceptableItem(ItemStack stack) {
-        return isAcceptableAtTable(stack)
-                ||EnchantmentTarget.DIGGER.isAcceptableItem(stack.getItem());
-    }
-
+    public int getPowerPerRank(){return Spellbound.config.acceleration.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.acceleration.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.acceleration.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.acceleration.IS_FOR_SALE;}
     @Override
     public float getMiningSpeed(int level, PlayerEntity playerEntity, ItemStack stack, BlockState block, float miningSpeed) {
         NbtCompound tag = stack.getOrCreateNbt();
@@ -85,7 +63,7 @@ public class AccelerationEnchantment extends SBEnchantment implements CustomCond
         NbtCompound tag = stack.getOrCreateNbt();
         if(tag.contains(ACCELERATION_TIME_KEY)){
             long time = tag.getLong(ACCELERATION_TIME_KEY);
-            if(entity.getWorld().getTime() - time > Spellbound.config.ACCELERATION_TIMEOUT){
+            if(entity.getWorld().getTime() - time > Spellbound.config.acceleration.TIMEOUT){
                 if(entity.handSwinging){
                     if (Spellbound.DEBUG){
                         Spellbound.LOGGER.info("Acceleration in overtime");
@@ -102,16 +80,5 @@ public class AccelerationEnchantment extends SBEnchantment implements CustomCond
         }
     }
 
-    @Override
-    public boolean isTreasure() {
-        return false;
-    }
 
-    @Override
-    public boolean isAcceptableAtTable(ItemStack stack) {
-        return stack.getItem() instanceof PickaxeItem
-                || stack.getItem() instanceof ShovelItem
-                || stack.getItem() instanceof AxeItem
-                || stack.getItem() == Items.BOOK;
-    }
 }

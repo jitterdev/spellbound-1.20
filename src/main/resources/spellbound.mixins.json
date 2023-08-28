@@ -2,11 +2,14 @@
   "required": true,
   "minVersion": "0.8",
   "package": "net.tigereye.spellbound.mixins",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "mixins": [
     "BlockMixin",
-    "EnchantmentHelperMixin",
+    "EnchantmentTargetMixin",
+    "EntityMixin",
+    "ExplosionMixin",
     "FishingBobberEntityMixin",
+    "ItemMixin",
     "ItemStackMixin",
     "LivingEntityMixin",
     "MobEntityMixin",
@@ -15,9 +18,11 @@
     "ProjectileEntityMixin",
     "StatusEffectInstanceMixin",
     "TridentEntityMixin",
+    "WorldChunkMixin",
     "WorldMixin"
   ],
   "client": [
+    "ClientPlayerEntityMixin",
     "ItemStackClientMixin"
   ],
   "injectors": {

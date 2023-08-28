@@ -6,16 +6,16 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.TargetPredicate;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.decoration.AbstractDecorationEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -35,12 +35,12 @@ public class SpellboundUtil {
 
     public static void pushPullEntitiesPlayersInRange(double range, double strength, LivingEntity user){
         Vec3d position = user.getPos();
-        List<Entity> entityList = user.world.getNonSpectatingEntities(Entity.class,
+        List<Entity> entityList = user.getWorld().getNonSpectatingEntities(Entity.class,
                 new Box(position.x+ range,position.y+range,position.z+range,
                         position.x-range,position.y-range,position.z-range));
         for (Entity target:
                 entityList) {
-            if(target != user && !(target instanceof AbstractDecorationEntity)) {
+            if(target != user && (target instanceof LivingEntity || target instanceof ItemEntity)) {
                 Vec3d forceVec = position.subtract(target.getPos()).normalize();
                 if (target instanceof LivingEntity) {
                     forceVec = forceVec.multiply(strength * Math.max(0, 1 - ((LivingEntity) target).getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE)));
@@ -52,7 +52,7 @@ public class SpellboundUtil {
             }
         }
 
-        List<PlayerEntity> playerList = user.world.getPlayers(TargetPredicate.DEFAULT,user,
+        List<PlayerEntity> playerList = user.getWorld().getPlayers(TargetPredicate.DEFAULT,user,
                 new Box(position.x+range,position.y+range,position.z+range,
                         position.x-range,position.y-range,position.z-range));
         for (LivingEntity target:
@@ -72,8 +72,8 @@ public class SpellboundUtil {
         return feetBlocked || headBlocked;
     }
 
-    public static void psudeoExplosion(LivingEntity source, boolean excludeSource, Vec3d position, float strength, float range, float force){
-        List<LivingEntity> entityList = source.world.getNonSpectatingEntities(LivingEntity.class,
+    public static void pseudoExplosion(LivingEntity source, boolean excludeSource, Vec3d position, float strength, float range, float force){
+        List<LivingEntity> entityList = source.getWorld().getNonSpectatingEntities(LivingEntity.class,
                 new Box(position.x+ range,position.y+range,position.z+range,
                         position.x-range,position.y-range,position.z-range));
         for (LivingEntity target:
@@ -83,9 +83,9 @@ public class SpellboundUtil {
                 float distance = (float) forceVec.length();
                 if(distance < range) {
                     float proximityRatio = (range-distance) / range;
-                    target.damage(DamageSource.explosion(source), strength * proximityRatio);
+                    target.damage(target.getDamageSources().explosion(source, source), strength * proximityRatio); // using source as both the source and attacker for explosion since we dont have attacker. really hacky
 
-                    forceVec = forceVec.multiply(1,0,1).add(0,.1,0).normalize();
+                    forceVec = forceVec.multiply(1,0,1).normalize().add(0,.1,0);
                     forceVec = forceVec.multiply(force * proximityRatio * Math.max(0, 1 - target.getAttributeValue(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE)));
 
                     target.addVelocity(forceVec.x, forceVec.y, forceVec.z);
@@ -105,7 +105,7 @@ public class SpellboundUtil {
             BlockState targetBlock;
             Block block;
             ObjectArrayList<Pair<ItemStack, BlockPos>> objectArrayList = new ObjectArrayList<>();
-            Explosion dummyExplosion = new Explosion(world,source, source.getX(), source.getY(), source.getZ(), 0.1f);
+            Explosion dummyExplosion = new Explosion(world, source, source.getX(), source.getY(), source.getZ(), 0.1f, false, Explosion.DestructionType.KEEP);
             for(int y = 0; y < size; y++){
                 if(lowerCorner.getY()+y >= 0){
                     for(int x = 0; x < size; x++){
@@ -123,8 +123,8 @@ public class SpellboundUtil {
                                 world.getProfiler().push("explosion_blocks");
                                 if (block.shouldDropItemsOnExplosion(dummyExplosion) && world instanceof ServerWorld) {
                                     BlockEntity blockEntity = targetBlock.hasBlockEntity() ? world.getBlockEntity(target) : null;
-                                    LootContext.Builder builder = (new LootContext.Builder((ServerWorld)world)).random(world.random).parameter(LootContextParameters.ORIGIN, Vec3d.ofCenter(target)).parameter(LootContextParameters.TOOL, ItemStack.EMPTY).optionalParameter(LootContextParameters.BLOCK_ENTITY, blockEntity).optionalParameter(LootContextParameters.THIS_ENTITY, source);
-                                    builder.parameter(LootContextParameters.EXPLOSION_RADIUS, strength/range);
+                                    LootContextParameterSet.Builder builder = (new LootContextParameterSet.Builder((ServerWorld)world)).add(LootContextParameters.ORIGIN, Vec3d.ofCenter(target)).add(LootContextParameters.TOOL, ItemStack.EMPTY).addOptional(LootContextParameters.BLOCK_ENTITY, blockEntity).addOptional(LootContextParameters.THIS_ENTITY, source);
+                                    builder.add(LootContextParameters.EXPLOSION_RADIUS, strength/range);
 
                                     targetBlock.getDroppedStacks(builder).forEach((stack) -> tryMergeStack(objectArrayList, stack, blockPos2));
                                 }
@@ -143,7 +143,7 @@ public class SpellboundUtil {
             }
         }
 
-        source.getEntityWorld().playSound(null, position.getX(), position.getY(), position.getZ(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 4.0F, (1.0F + (source.world.random.nextFloat() - source.world.random.nextFloat()) * 0.2F) * 0.7F);
+        source.getEntityWorld().playSound(null, position.getX(), position.getY(), position.getZ(), SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 4.0F, (1.0F + (source.getWorld().random.nextFloat() - source.getWorld().random.nextFloat()) * 0.2F) * 0.7F);
     }
 
     private static void tryMergeStack(ObjectArrayList<Pair<ItemStack, BlockPos>> stacks, ItemStack stack, BlockPos pos) {
@@ -162,6 +162,15 @@ public class SpellboundUtil {
         }
 
         stacks.add(Pair.of(stack, pos));
+    }
+
+    public static LootContextParameterSet.Builder getLootContextBuilder(LivingEntity entity, boolean causedByPlayer, DamageSource damageSource) {
+        LootContextParameterSet.Builder builder = (new LootContextParameterSet.Builder((ServerWorld)entity.getWorld())).add(LootContextParameters.THIS_ENTITY, entity).add(LootContextParameters.ORIGIN, entity.getPos()).add(LootContextParameters.DAMAGE_SOURCE, damageSource).addOptional(LootContextParameters.KILLER_ENTITY, damageSource.getAttacker()).addOptional(LootContextParameters.DIRECT_KILLER_ENTITY, damageSource.getSource());
+        if (causedByPlayer && entity.attackingPlayer != null) {
+            builder = builder.add(LootContextParameters.LAST_DAMAGE_PLAYER, entity.attackingPlayer).luck(entity.attackingPlayer.getLuck());
+        }
+        return builder;
+
     }
 
     public static void YandereViolence(LivingEntity entity){
@@ -185,6 +194,15 @@ public class SpellboundUtil {
             damage += polygamy * (itemCount - (monogamy + polygamy));
         }
 
-        entity.damage(SBDamageSource.SB_INFIDELITY,damage);
+        entity.damage(SBDamageSource.of(entity.getWorld(), SBDamageSource.SB_INFIDELITY),damage);
+    }
+
+    public static Enchantment.Rarity rarityLookup(int configValue){
+        return switch (configValue) {
+            case 1 -> Enchantment.Rarity.COMMON;
+            case 2 -> Enchantment.Rarity.UNCOMMON;
+            case 3 -> Enchantment.Rarity.RARE;
+            default -> Enchantment.Rarity.VERY_RARE;
+        };
     }
 }

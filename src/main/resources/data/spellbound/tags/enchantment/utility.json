@@ -2,7 +2,10 @@
   "replace": false,
   "values": [
     "minecraft:knockback",
+    "minecraft:riptide",
+    "minecraft:swift_sneak",
     "spellbound:attractive",
+    "spellbound:airline",
     "spellbound:cave_in",
     "spellbound:impersonal",
     "spellbound:launching",

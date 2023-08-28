@@ -1,52 +1,39 @@
 package net.tigereye.spellbound.enchantments.utility;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentTarget;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.tigereye.spellbound.Spellbound;
-import net.tigereye.spellbound.SpellboundPlayerEntity;
-import net.tigereye.spellbound.enchantments.CustomConditionsEnchantment;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
+import net.tigereye.spellbound.interfaces.SpellboundPlayerEntity;
+import net.tigereye.spellbound.registration.SBEnchantmentTargets;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
-public class ImpersonalEnchantment extends SBEnchantment implements CustomConditionsEnchantment {
+public class ImpersonalEnchantment extends SBEnchantment{
 
     public ImpersonalEnchantment() {
         //EnchantmentTarget is vanishable because I'm handling that myself and so want a very permissive filter
-        super(Rarity.RARE, EnchantmentTarget.VANISHABLE, new EquipmentSlot[] {EquipmentSlot.MAINHAND});
-        REQUIRES_PREFERRED_SLOT = false;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.impersonal.RARITY), SBEnchantmentTargets.ANY_WEAPON, new EquipmentSlot[] {EquipmentSlot.MAINHAND},false);
     }
-
     @Override
-    public int getMinPower(int level) {
-        return 20;
-    }
-
+    public boolean isEnabled() {return Spellbound.config.impersonal.ENABLED;}
     @Override
-    public int getMaxPower(int level) {
-        return 50;
-    }
-
+    public int getSoftLevelCap(){return Spellbound.config.impersonal.SOFT_CAP;}
     @Override
-    public boolean isEnabled() {
-        return Spellbound.config.IMPERSONAL_ENABLED;
-    }
-
+    public int getHardLevelCap(){return Spellbound.config.impersonal.HARD_CAP;}
     @Override
-    public int getMaxLevel() {
-        if(isEnabled()) return 1;
-        else return 0;
-    }
-
+    public int getBasePower(){return Spellbound.config.impersonal.BASE_POWER;}
     @Override
-    public boolean isAcceptableItem(ItemStack stack) {
-        return isAcceptableAtTable(stack);
-    }
+    public int getPowerPerRank(){return Spellbound.config.impersonal.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.impersonal.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.impersonal.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.impersonal.IS_FOR_SALE;}
 
     @Override
     public void onTargetDamaged(LivingEntity user, Entity target, int level) {
@@ -59,17 +46,17 @@ public class ImpersonalEnchantment extends SBEnchantment implements CustomCondit
         }
         Direction shift = target.getHorizontalFacing().getOpposite();
         double distanceBehind = 3+target.getBoundingBox().getZLength();
-        BlockPos newPos = new BlockPos(target.getX() + (shift.getOffsetX()*distanceBehind),
-                target.getY() + (shift.getOffsetY()*distanceBehind),
-                target.getZ() + (shift.getOffsetZ()*distanceBehind));
-        BlockState newPosBlock = user.world.getBlockState(newPos);
+        BlockPos newPos = new BlockPos((int) (target.getX() + (shift.getOffsetX()*distanceBehind)),
+                (int) (target.getY() + (shift.getOffsetY()*distanceBehind)),
+                (int) (target.getZ() + (shift.getOffsetZ()*distanceBehind)));
+        BlockState newPosBlock = user.getWorld().getBlockState(newPos);
         if(!newPosBlock.isOpaque()) {
             user.teleport(newPos.getX(),newPos.getY(),newPos.getZ());
             user.setYaw(target.getHorizontalFacing().asRotation());
         }
         else{
             newPos = newPos.add(0,1,0);
-            newPosBlock = user.world.getBlockState(newPos);
+            newPosBlock = user.getWorld().getBlockState(newPos);
             if(!newPosBlock.isOpaque()) {
                 user.teleport(newPos.getX(),newPos.getY(),newPos.getZ());
                 user.setYaw(target.getHorizontalFacing().asRotation());
@@ -77,14 +64,5 @@ public class ImpersonalEnchantment extends SBEnchantment implements CustomCondit
         }
         //TODO: insert warp sound effect here
         super.onTargetDamaged(user, target, level);
-    }
-
-    @Override
-    public boolean isAcceptableAtTable(ItemStack stack) {
-        return stack.getItem() instanceof SwordItem
-                || stack.getItem() instanceof AxeItem
-                || stack.getItem() instanceof TridentItem
-                || stack.getItem() instanceof RangedWeaponItem
-                || stack.getItem() == Items.BOOK;
     }
 }

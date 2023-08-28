@@ -1,52 +1,41 @@
 package net.tigereye.spellbound.enchantments.protection;
 
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.enchantment.ProtectionEnchantment;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttributeInstance;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.item.*;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.tigereye.spellbound.Spellbound;
-import net.tigereye.spellbound.enchantments.CustomConditionsEnchantment;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
+import net.tigereye.spellbound.registration.SBEnchantmentTargets;
 import net.tigereye.spellbound.registration.SBStatusEffects;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
-public class FleshWoundEnchantment extends SBEnchantment implements CustomConditionsEnchantment {
+public class FleshWoundEnchantment extends SBEnchantment{
 
     public FleshWoundEnchantment() {
-        super(Rarity.UNCOMMON, EnchantmentTarget.VANISHABLE, new EquipmentSlot[] {EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET,EquipmentSlot.OFFHAND});
-        REQUIRES_PREFERRED_SLOT = true;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.fleshWound.RARITY), SBEnchantmentTargets.ARMOR_MAYBE_SHIELD,
+                Spellbound.config.CAN_SHIELD_HAVE_ARMOR_ENCHANTMENTS
+                        ? new EquipmentSlot[] {EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET,EquipmentSlot.OFFHAND}
+                        : new EquipmentSlot[] {EquipmentSlot.HEAD,EquipmentSlot.CHEST,EquipmentSlot.LEGS,EquipmentSlot.FEET}
+                ,true);
     }
-
     @Override
-    public int getMinPower(int level) {
-        return (level*11)-10;
-    }
-
+    public boolean isEnabled() {return Spellbound.config.fleshWound.ENABLED;}
     @Override
-    public int getMaxPower(int level) {
-        return this.getMinPower(level)+15;
-    }
-
+    public int getSoftLevelCap(){return Spellbound.config.fleshWound.SOFT_CAP;}
     @Override
-    public boolean isEnabled() {
-        return Spellbound.config.FLESH_WOUND_ENABLED;
-    }
-
+    public int getHardLevelCap(){return Spellbound.config.fleshWound.HARD_CAP;}
     @Override
-    public int getMaxLevel() {
-        if(isEnabled()) return 4;
-        else return 0;
-    }
-
+    public int getBasePower(){return Spellbound.config.fleshWound.BASE_POWER;}
     @Override
-    public boolean isAcceptableItem(ItemStack stack) {
-        return isAcceptableAtTable(stack);
-    }
+    public int getPowerPerRank(){return Spellbound.config.fleshWound.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.fleshWound.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.fleshWound.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.fleshWound.IS_FOR_SALE;}
 
     @Override
     public void onRedHealthDamage(int level, ItemStack itemStack, LivingEntity entity, float amount) {
@@ -64,20 +53,6 @@ public class FleshWoundEnchantment extends SBEnchantment implements CustomCondit
         }
         float absorption = entity.getAbsorptionAmount();
         entity.addStatusEffect(new StatusEffectInstance(SBStatusEffects.BRAVADOS, 1200, 0,false,false,false));
-        entity.setAbsorptionAmount(absorption+(level*amount*Spellbound.config.FLESH_WOUND_ABSORPTION_PER_DAMAGE_PER_LEVEL));
-    }
-
-    @Override
-    public boolean isAcceptableAtTable(ItemStack stack) {
-        return stack.getItem() instanceof ArmorItem
-                || stack.getItem() instanceof ShieldItem
-                || stack.getItem() == Items.BOOK;
-    }
-
-    private static void ReplaceAttributeModifier(EntityAttributeInstance att, EntityAttributeModifier mod)
-    {
-        //removes any existing mod and replaces it with the updated one.
-        att.removeModifier(mod);
-        att.addPersistentModifier(mod);
+        entity.setAbsorptionAmount(absorption+(level*amount*Spellbound.config.fleshWound.ABSORPTION_PER_DAMAGE_PER_LEVEL));
     }
 }

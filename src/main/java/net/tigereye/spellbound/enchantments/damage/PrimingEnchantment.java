@@ -1,77 +1,63 @@
 package net.tigereye.spellbound.enchantments.damage;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.projectile.PersistentProjectileEntity;
-import net.minecraft.item.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.tigereye.spellbound.Spellbound;
-import net.tigereye.spellbound.enchantments.CustomConditionsEnchantment;
 import net.tigereye.spellbound.enchantments.SBEnchantment;
-import net.tigereye.spellbound.mob_effect.SBStatusEffect;
+import net.tigereye.spellbound.registration.SBEnchantmentTargets;
 import net.tigereye.spellbound.registration.SBStatusEffects;
+import net.tigereye.spellbound.util.SpellboundUtil;
 
-public class PrimingEnchantment extends SBEnchantment implements CustomConditionsEnchantment {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
+public class PrimingEnchantment extends SBEnchantment{
+
+    private static final Map<UUID,Long> lastUse = new HashMap<>();
     public PrimingEnchantment() {
-        super(Rarity.RARE, EnchantmentTarget.VANISHABLE, new EquipmentSlot[] {EquipmentSlot.MAINHAND});
-        REQUIRES_PREFERRED_SLOT = false;
+        super(SpellboundUtil.rarityLookup(Spellbound.config.priming.RARITY), SBEnchantmentTargets.ANY_WEAPON, new EquipmentSlot[] {EquipmentSlot.MAINHAND},false);
     }
 
     @Override
-    public boolean isEnabled() {
-        return Spellbound.config.PRIMING_ENABLED;
-    }
-
+    public boolean isEnabled() {return Spellbound.config.priming.ENABLED;}
     @Override
-    public int getMinPower(int level) {
-        return 5 + (level*10);
-    }
-
+    public int getSoftLevelCap(){return Spellbound.config.priming.SOFT_CAP;}
     @Override
-    public int getMaxPower(int level) {
-        return this.getMinPower(level)+15;
-    }
-
+    public int getHardLevelCap(){return Spellbound.config.priming.HARD_CAP;}
     @Override
-    public int getMaxLevel() {
-        if(isEnabled()) return 5;
-        else return 0;
-    }
-
+    public int getBasePower(){return Spellbound.config.priming.BASE_POWER;}
     @Override
-    public boolean isAcceptableItem(ItemStack stack) {
-        return isAcceptableAtTable(stack);
-    }
+    public int getPowerPerRank(){return Spellbound.config.priming.POWER_PER_RANK;}
+    @Override
+    public int getPowerRange(){return Spellbound.config.priming.POWER_RANGE;}
+    @Override
+    public boolean isTreasure() {return Spellbound.config.priming.IS_TREASURE;}
+    @Override
+    public boolean isAvailableForEnchantedBookOffer(){return Spellbound.config.priming.IS_FOR_SALE;}
 
     @Override
     public void onTargetDamaged(LivingEntity user, Entity target, int level) {
-        //TODO: changed primed to use a psudo-explosion like outburst does
-        if(target instanceof LivingEntity) {
-            int effectLevel = 0;
-            StatusEffectInstance primedInstance = ((LivingEntity)target).getStatusEffect(SBStatusEffects.PRIMED);
-            if(primedInstance != null){
-                effectLevel = Math.min(primedInstance.getAmplifier()+1, level-1);
-            }
-            ((LivingEntity) target).addStatusEffect(new StatusEffectInstance(SBStatusEffects.PRIMED, 60, effectLevel));
+        if(user.getWorld().isClient()){
+            return;
         }
-
+        if(target instanceof LivingEntity) {
+            //minecraft's on target damaged trigger is flawed and calls items in player's main hands twice. Check for that.
+            if (lastUse.getOrDefault(user.getUuid(),0L) != user.getWorld().getTime()) {
+                lastUse.put(user.getUuid(),user.getWorld().getTime());
+                int effectLevel = 0;
+                StatusEffectInstance primedInstance = ((LivingEntity) target).getStatusEffect(SBStatusEffects.PRIMED);
+                if (primedInstance != null) {
+                    effectLevel = Math.min(primedInstance.getAmplifier() + 1, level - 1);
+                }
+                if (Spellbound.DEBUG) {
+                    Spellbound.LOGGER.info("Applying Primed at magnitude " + effectLevel);
+                }
+                ((LivingEntity) target).addStatusEffect(new StatusEffectInstance(SBStatusEffects.PRIMED, Spellbound.config.priming.DURATION, effectLevel));
+            }
+        }
         super.onTargetDamaged(user, target, level);
-    }
-
-    @Override
-    public boolean isAcceptableAtTable(ItemStack stack) {
-        return stack.getItem() instanceof TridentItem
-                || stack.getItem() instanceof SwordItem
-                || stack.getItem() instanceof AxeItem
-                || stack.getItem() instanceof RangedWeaponItem
-                || stack.getItem() == Items.BOOK;
     }
 }
