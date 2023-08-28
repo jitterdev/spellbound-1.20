@@ -54,8 +54,6 @@
 
 ### Universal Enchantments
 
-<b>Buffered</b> is a unbreaking enchantment which provides your tool a regenerating durability buffer that must be depleted before the tool is damaged. Appears on all breakables, incompatible with Unbreaking and similar enchantments.
-
 <b>Legacy</b> is a repair enchantment that ensures that your equipment will live on, if only in spirit. If a item with Legacy breaks, it will leave behind a book with all of its enchantments. Appears on all breakables, incompatible with Mending and other repair enchantments.
 
 <b>Metabolising</b> is a repair enchantment that aggressively feeds upon your stamina to restore itself. If you have the energy to heal, it will take as much as it needs to return to top form. Appears on all breakables, incompatible with Mending and other repair enchantments.
