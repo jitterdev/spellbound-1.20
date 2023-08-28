@@ -12,7 +12,7 @@ import net.tigereye.spellbound.util.SpellboundUtil;
 public class LaunchingEnchantment extends SBEnchantment{
 
     public LaunchingEnchantment() {
-        super(SpellboundUtil.rarityLookup(Spellbound.config.launching.RARITY), SBEnchantmentTargets.RANGED_WEAPON, new EquipmentSlot[] {EquipmentSlot.MAINHAND,EquipmentSlot.OFFHAND},false);
+        super(SpellboundUtil.rarityLookup(Spellbound.config.launching.RARITY), SBEnchantmentTargets.ANY_WEAPON, new EquipmentSlot[] {EquipmentSlot.MAINHAND,EquipmentSlot.OFFHAND},false);
     }
     @Override
     public boolean isEnabled() {return Spellbound.config.launching.ENABLED;}

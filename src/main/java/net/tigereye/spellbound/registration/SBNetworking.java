@@ -12,6 +12,7 @@ import net.tigereye.spellbound.Spellbound;
 import net.tigereye.spellbound.interfaces.SpellboundLivingEntity;
 import java.util.HashSet;
 import java.util.Set;
+import net.minecraft.network.packet.s2c.play.PositionFlag;
 
 public class SBNetworking {
     public static final Identifier TELEPORT_REQUEST_PACKET_ID = new Identifier(Spellbound.MODID,"teleport_request");
@@ -24,10 +25,10 @@ public class SBNetworking {
             double y = buf.readDouble();
             double z = buf.readDouble();
             server.execute(() -> {
-                Set<PlayerPositionLookS2CPacket.Flag> flags = new HashSet<>();
-                flags.add(PlayerPositionLookS2CPacket.Flag.X);
-                flags.add(PlayerPositionLookS2CPacket.Flag.Y);
-                flags.add(PlayerPositionLookS2CPacket.Flag.Z);
+                Set<PositionFlag> flags = new HashSet<>();
+                flags.add(PositionFlag.X);
+                flags.add(PositionFlag.Y);
+                flags.add(PositionFlag.Z);
                 client.networkHandler.requestTeleport(x, y, z, client.getYaw(), client.getPitch(), flags);
 
             });

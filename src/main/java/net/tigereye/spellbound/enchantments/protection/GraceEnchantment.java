@@ -2,9 +2,8 @@ package net.tigereye.spellbound.enchantments.protection;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributes;
@@ -56,7 +55,7 @@ public class GraceEnchantment extends SBEnchantment{
         return magnitude * (1+(level*Spellbound.config.grace.IFRAME_MAGNITUDE_PER_LEVEL));
     }
 
-    public static void renderArmor(MatrixStack matrixStack, float delta){
+    public static void renderArmor(DrawContext context, float delta){
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayerEntity player = client.player;
         if(player != null && !(player.isCreative() || player.isSpectator())) {
@@ -67,7 +66,6 @@ public class GraceEnchantment extends SBEnchantment{
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
 
-                matrixStack.push();
                 RenderSystem._setShaderTexture(0, GRACE_ARMOR);
                 int scaledWidth = client.getWindow().getScaledWidth();
                 int scaledHeight = client.getWindow().getScaledHeight();
@@ -85,14 +83,12 @@ public class GraceEnchantment extends SBEnchantment{
                 for (int w = 0; w < 10; ++w) {
                     x = m + w * 8;
                     if (w * 2 + 1 < graceAmount) {
-                        DrawableHelper.drawTexture(matrixStack, x, s, 0, fadeLevel*9, 9, 9, 18, 36);
+                        context.drawTexture(GRACE_ARMOR, x, s, 0, fadeLevel*9, 9, 9, 18, 36);
 
                     } else if (w * 2 < graceAmount) {
-                        DrawableHelper.drawTexture(matrixStack, x, s, 9, fadeLevel*9, 9, 9, 18, 36);
+                        context.drawTexture(GRACE_ARMOR, x, s, 9, fadeLevel*9, 9, 9, 18, 36);
                     }
                 }
-
-                matrixStack.pop();
 
                 RenderSystem.enableDepthTest();
             }
